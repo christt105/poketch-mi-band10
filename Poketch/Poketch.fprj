@@ -1,5 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<FaceProject DeviceType="466" Id="">
-	<Screen Title="" Bitmap="">
+<?xml version="1.0" ?>
+<FaceProject DeviceType="466" Id="167210065">
+	<Screen Title="Pokétch" Bitmap="">
+		<Widget Shape="30" Name="Background" Bitmap="Background.png" X="0" Y="0" Width="48" Height="48" Alpha="255" Visible_Src="0"/>
+		<Widget Shape="32" Name="HourHigh" BitmapList="BigNum_0.png|BigNum_1.png|BigNum_2.png|BigNum_3.png|BigNum_4.png|BigNum_5.png|BigNum_6.png|BigNum_7.png|BigNum_8.png|BigNum_9.png" X="47" Y="167" Width="32" Height="76" Alpha="255" Visible_Src="0" Digits="1" Alignment="0" Value_Src="1000911" Spacing="0" Blanking="0"/>
+		<Widget Shape="32" Name="HourLow" BitmapList="BigNum_0.png|BigNum_1.png|BigNum_2.png|BigNum_3.png|BigNum_4.png|BigNum_5.png|BigNum_6.png|BigNum_7.png|BigNum_8.png|BigNum_9.png" X="83" Y="167" Width="32" Height="76" Alpha="255" Visible_Src="0" Digits="1" Alignment="0" Value_Src="0911" Spacing="0" Blanking="0"/>
+		<Widget Shape="32" Name="MinuteHigh" BitmapList="BigNum_0.png|BigNum_1.png|BigNum_2.png|BigNum_3.png|BigNum_4.png|BigNum_5.png|BigNum_6.png|BigNum_7.png|BigNum_8.png|BigNum_9.png" X="131" Y="167" Width="32" Height="76" Alpha="255" Visible_Src="0" Digits="1" Alignment="0" Value_Src="1211" Spacing="0" Blanking="0"/>
+		<Widget Shape="32" Name="MinuteLow" BitmapList="BigNum_0.png|BigNum_1.png|BigNum_2.png|BigNum_3.png|BigNum_4.png|BigNum_5.png|BigNum_6.png|BigNum_7.png|BigNum_8.png|BigNum_9.png" X="167" Y="167" Width="32" Height="76" Alpha="255" Visible_Src="0" Digits="1" Alignment="0" Value_Src="1111" Spacing="0" Blanking="0"/>
+		<Widget Shape="32" Name="Battery" BitmapList="" X="82" Y="236" Width="48" Height="48" Alpha="255" Visible_Src="0" Digits="1" Alignment="0" Value_Src="841" Spacing="0" Blanking="0"/>
 	</Screen>
 </FaceProject>
