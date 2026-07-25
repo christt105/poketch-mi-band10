@@ -27,7 +27,9 @@ Root is `<FaceProject DeviceType="466" Id="...">` containing one `<Screen>` with
 
 `Value_Src` (numeric data binding) and `Visible_Src` (conditional visibility binding) are opaque numeric codes owned by the design tool — there's no in-repo mapping table. When adding a widget that binds to the same kind of data as an existing one (e.g. another time/battery/status readout), copy the `Value_Src`/`Visible_Src` value pattern from the most similar existing widget rather than guessing new codes.
 
+**`Width`/`Height` are not a resize control.** Mi Create derives them from the referenced bitmap's actual pixel dimensions and re-syncs them on open/save — the fields are locked in the app UI, and hand-editing them in the XML alone has no visible effect (confirmed by on-device testing). To make a widget bigger or smaller, regenerate the PNG asset(s) at the target pixel size (nearest-neighbor upscale keeps this project's pixel-art style crisp) and only then set `Width`/`Height` to match the new file, for consistency with what Mi Create will write back. If several widgets share one `BitmapList` (e.g. a shared digit-strip font) but need different rendered sizes, they need distinct filename sets (see `SmallNum_*.png` vs `NumMed_*.png`), not divergent `Width`/`Height` on the same files.
+
 When adding a new widget:
-1. Add the required PNG asset(s) to `Poketch/images/`.
-2. Add a `<Widget>` entry to `Poketch.fprj` with the appropriate `Shape` and matching attribute set from the patterns above.
+1. Add the required PNG asset(s) to `Poketch/images/`, sized to their intended on-screen dimensions.
+2. Add a `<Widget>` entry to `Poketch.fprj` with the appropriate `Shape` and matching attribute set from the patterns above, with `Width`/`Height` matching the asset's actual pixel size.
 3. Reuse `Value_Src`/`Visible_Src` values from an existing widget of the same data type as a starting point.
