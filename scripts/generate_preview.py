@@ -40,13 +40,12 @@ STANDARD_VALUES = {
     "HeartRate": 72,
 }
 
-# Shape="30" widgets are conditionally visible on-device (Visible_Src != "0").
+# Widgets with Visible_Src != "0" are conditionally visible on-device.
 # Explicitly decide what a "typical" preview should show for those; anything
 # else with Visible_Src == "0" is always drawn.
 VISIBLE_OVERRIDES = {
     "Lock": False,
     "Bluetooth": True,
-    "AnimationSleep": False,
 }
 
 DIGIT_FILE_RE = re.compile(r"_(\d)\.png$")
@@ -72,10 +71,11 @@ def render(fprj_path: Path, images_dir: Path) -> Image.Image:
         shape = widget.get("Shape")
         x, y = int(widget.get("X")), int(widget.get("Y"))
 
+        visible = VISIBLE_OVERRIDES.get(name, widget.get("Visible_Src") == "0")
+        if not visible:
+            continue
+
         if shape == "30":
-            visible = VISIBLE_OVERRIDES.get(name, widget.get("Visible_Src") == "0")
-            if not visible:
-                continue
             canvas.alpha_composite(load(images_dir, widget.get("Bitmap")), (x, y))
 
         elif shape == "31":
