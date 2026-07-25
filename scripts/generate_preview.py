@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Renders Poketch.fprj with a fixed set of sample values into preview PNGs:
+Renders Poketch.fprj with a fixed set of sample values into preview images:
   - Poketch/images/poketch_preview.png   (native 212x520, the Mi Create project thumbnail)
   - docs/preview/poketch_preview.png     (native 212x520)
   - docs/preview/poketch_preview_2x.png  (2x upscale, nearest-neighbor to keep pixel art crisp)
+  - docs/preview/poketch_preview_blink.gif (2x, animates any Shape=31 widget named "anim_[...]")
 
 Reads widget geometry/bindings straight from Poketch.fprj, so it stays correct
 as the layout changes. Only the sample VALUES below are hardcoded.
@@ -56,7 +57,11 @@ def load(images_dir: Path, filename: str) -> Image.Image:
     return Image.open(images_dir / filename).convert("RGBA")
 
 
-def render(fprj_path: Path, images_dir: Path) -> Image.Image:
+def render(fprj_path: Path, images_dir: Path, frame_overrides: dict[str, str] | None = None,
+           force_visible: set[str] | None = None) -> Image.Image:
+    frame_overrides = frame_overrides or {}
+    force_visible = force_visible or set()
+
     root = ET.parse(fprj_path).getroot()
     widgets = root.find("Screen").findall("Widget")
 
@@ -71,7 +76,7 @@ def render(fprj_path: Path, images_dir: Path) -> Image.Image:
         shape = widget.get("Shape")
         x, y = int(widget.get("X")), int(widget.get("Y"))
 
-        visible = VISIBLE_OVERRIDES.get(name, widget.get("Visible_Src") == "0")
+        visible = name in force_visible or VISIBLE_OVERRIDES.get(name, widget.get("Visible_Src") == "0")
         if not visible:
             continue
 
@@ -79,6 +84,9 @@ def render(fprj_path: Path, images_dir: Path) -> Image.Image:
             canvas.alpha_composite(load(images_dir, widget.get("Bitmap")), (x, y))
 
         elif shape == "31":
+            if name in frame_overrides:
+                canvas.alpha_composite(load(images_dir, frame_overrides[name]), (x, y))
+                continue
             entries = dict(INDEXED_ENTRY_RE.findall(widget.get("BitmapList")))
             index = str(STANDARD_VALUES.get(name, int(widget.get("DefaultIndex", "0"))))
             canvas.alpha_composite(load(images_dir, entries[index]), (x, y))
@@ -107,6 +115,36 @@ def render(fprj_path: Path, images_dir: Path) -> Image.Image:
     return canvas.convert("RGB")
 
 
+ANIM_NAME_RE = re.compile(r"^anim_\[(\d+)@(\d+)\]$")
+
+
+def build_blink_gif(fprj_path: Path, images_dir: Path, output_path: Path, scale: int = 2) -> bool:
+    """Finds a Shape=31 widget named anim_[REPEATS@INTERVAL_MS] and renders one
+    frame per BitmapList entry, in order, at that interval, into an animated GIF.
+    Returns False (and writes nothing) if the project has no such widget."""
+    root = ET.parse(fprj_path).getroot()
+    widgets = root.find("Screen").findall("Widget")
+
+    anim_widget = next(
+        (w for w in widgets if w.get("Shape") == "31" and ANIM_NAME_RE.match(w.get("Name", ""))),
+        None,
+    )
+    if anim_widget is None:
+        return False
+
+    name = anim_widget.get("Name")
+    interval_ms = int(ANIM_NAME_RE.match(name).group(2))
+    frame_files = [f for _, f in INDEXED_ENTRY_RE.findall(anim_widget.get("BitmapList"))]
+
+    frames = []
+    for frame_file in frame_files:
+        still = render(fprj_path, images_dir, frame_overrides={name: frame_file}, force_visible={name})
+        frames.append(still.resize((still.width * scale, still.height * scale), Image.NEAREST))
+
+    frames[0].save(output_path, save_all=True, append_images=frames[1:], duration=interval_ms, loop=0)
+    return True
+
+
 def main() -> None:
     preview = render(FPRJ_PATH, IMAGES_DIR)
     preview_2x = preview.resize((preview.width * 2, preview.height * 2), Image.NEAREST)
@@ -120,6 +158,12 @@ def main() -> None:
     print(f"Wrote {IMAGES_DIR / 'poketch_preview.png'} ({preview.size[0]}x{preview.size[1]})")
     print(f"Wrote {DOCS_PREVIEW_DIR / 'poketch_preview.png'} ({preview.size[0]}x{preview.size[1]})")
     print(f"Wrote {DOCS_PREVIEW_DIR / 'poketch_preview_2x.png'} ({preview_2x.size[0]}x{preview_2x.size[1]})")
+
+    gif_path = DOCS_PREVIEW_DIR / "poketch_preview_blink.gif"
+    if build_blink_gif(FPRJ_PATH, IMAGES_DIR, gif_path):
+        print(f"Wrote {gif_path}")
+    else:
+        print("No anim_[...] widget found, skipped blink GIF")
 
 
 if __name__ == "__main__":
